@@ -1,0 +1,220 @@
+---
+title: "The Effects of Age and Hospital Stay on Risk of Infection"
+author: "Allen Arriaga"
+date: "10/10/25"
+output:
+  pdf_document:
+    number_sections: true
+  html_document:
+    df_print: paged
+---
+```{r echo=FALSE, include=FALSE, message=FALSE}
+# all library load statements here
+
+r.version <- "4.3.2"
+seed.val <- 123456
+library(caret) 
+library(knitr)
+library(dplyr)
+```
+
+Hospital-acquired infections are a critical concern for healthcare systems worldwide, posing threats to patient safety and increasing healthcare costs. Understanding the factors that contribute to infection risk is extremely important for improving hospital practices and patient outcomes. In this analysis, I applied multiple linear regression modeling to data on hospital performance and patient characteristics to investigate how hospital stay length, patient age, and diagnostic testing rates influence infection risk.
+
+The main question of this investigation is: “How do average patient age and length of stay affect the risk of hospital-acquired infection?”
+
+# Data Description and Processing
+The dataset used in this analysis was collected from hospitals across the United States and includes a variety of operational, demographic, and clinical characteristics. Each observation represents data from one hospital during the study period.
+
+This dataset contains several types of variables related to hospital resources, patient demographics, and infection control practices.
+
+**Predictors:**
+
+- **Stay:** Average patient stay (days)  
+- **Age:** Average patient age (years)  
+- **Culture:** Cultures per 100 patients without infection symptoms  
+- **Xray:** X-rays per 100 patients without pneumonia symptoms  
+- **Beds:** Average number of hospital beds  
+- **MedSchool:** 1 = hospital has a medical school, 2 = no  
+- **Region:** Geographic region (NE, NC, S, W)  
+- **Census:** Average daily patient count  
+- **Nurses:** Average full-time equivalent nurses  
+- **Facilities:** Percent of 35 possible hospital services provided  
+
+
+The dataset was checked for missing or inconsistent values before analysis. Of the original 116 observations, 3 records containing missing data were removed, leaving 113 complete observations for the final dataset.
+
+The dependent variable in this dataset is InfctRsk, which measures the average estimated probability of acquiring infection in hospital (percent)
+
+```{r echo=FALSE, include=FALSE, message=FALSE}
+irisk.df <- read.csv("dataset2.csv")
+irisk.df <- na.omit(irisk.df)
+```
+
+
+# Data Exploration
+
+The dataset contains observations on hospitals from different regions. As we believe infection rates may vary depending on regional factors such as population density and healthcare resources, we examine the overall distribution of infection risk across all regions.
+
+```{r echo=FALSE}
+irisk.df$Region <- factor(irisk.df$Region, levels = c(1, 2, 3, 4), labels = c("NE", "NC", "S", "W"))
+
+region_table <- table(irisk.df$Region)
+kable(region_table, caption = "Number of Hospitals by Region")
+
+```
+
+I also included the distribution of the dependent variable, Infection Risk, As well as its correlation to the Region variable.
+
+```{r echo=FALSE, fig.cap = "Infection Risk"}
+inf_summary <- data.frame(Statistic = c("Min", "1st Quartile", "Median", "Mean", "3rd Quartile", "Max"),Value = as.numeric(summary(irisk.df$InfctRsk)))
+
+boxplot(irisk.df$InfctRsk,main = "Figure 1: Boxplot of Infection Risk",ylab = "Risk of Infection(percentage)",col = "gray",border = "black")
+
+kable(inf_summary, caption = "Summary Statistics for Infection Risk(percentage)")
+
+```
+
+
+
+```{r echo=FALSE, fig.cap = "Infection Risk by Region"}
+
+boxplot(InfctRsk ~ Region,data = irisk.df,main = "Figure 2: Infection Risk by Region",xlab = "Region",ylab = "Infection Risk (%)",col = c("lightblue", "lightgreen", "lightpink", "lightyellow"),border = "black")
+```
+
+```{r echo=FALSE}
+
+region_summary <- irisk.df %>%
+  group_by(Region) %>%
+  summarise(
+    Min = min(InfctRsk, na.rm = TRUE),
+    Q1 = quantile(InfctRsk, 0.25, na.rm = TRUE),
+    Median = median(InfctRsk, na.rm = TRUE),
+    Mean = mean(InfctRsk, na.rm = TRUE),
+    Q3 = quantile(InfctRsk, 0.75, na.rm = TRUE),
+    Max = max(InfctRsk, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+kable(region_summary, caption = "Summary of Infection Risk by Region")
+
+```
+
+The summary statistics indicate that infection risk varies slightly by region. Hospitals in the Northeast (NE) show the highest mean infection risk (4.86%), while hospitals in the South (S) have the lowest (3.93%). The spread is somewhat wider in the South and North Central regions, suggesting more variability among hospitals in those areas.
+
+
+# Modeling the Effect of Age and Stay on Risk of Infection
+
+The variables Age and Stay measure average patient age (in years) and average length of hospital stay (in days), respectively. Both variables are expected to influence infection risk: older patients may have weaker immune systems, and longer hospital stays increase exposure time to potential sources of infection. By examining these variables together, we can assess how hospital factors interact to affect the probability of acquiring an infection during hospitalization. This analysis helps identify which factors may contribute most to infection risk and guide improvements in hospital management and patient care practices.
+
+## Hypothesis
+I hypothesize that a higher age and longer hospital stay will result in an increase probability of acquiring infection in hospital
+
+## Model 1:
+
+The dataset includes hospitals from four major U.S. regions: Northeast, North Central, South, and West. Regional differences in healthcare resources, population density, and hospital practices may influence the likelihood of hospital-acquired infections.
+
+I fit a first linear model that included Stay and Region as predictors, with Infection Risk (InfctRsk) as the outcome variable. This model allows us to examine whether the average length of patient stay and geographic region together help explain variation in hospital infection risk.
+
+```{r echo=FALSE}
+fit.1 <- lm (InfctRsk ~ Stay + Region, data=irisk.df)
+coef.vals <- coef(summary(fit.1))
+kable(coef.vals, caption = "Predicting Infection Risk with Stay and Region")
+```
+
+```{r echo=FALSE, results ='asis'}
+fitsum <- summary(fit.1)$adj.r.squared[1]
+formatted.str <- sprintf("The adjusted R-squared for this model was %.4f, indicating that Stay and Region together explain about %.1f%% of the variation in Infection Risk.",fitsum, fitsum * 100
+)
+cat(formatted.str)
+
+```
+
+The results indicate that average length of hospital stay is the strongest predictor of infection risk. Hospitals where patients stay longer tend to have higher infection risk. Regional differences (particularly for the Western region) may play a smaller or less consistent role.
+
+## Model 2: 
+
+I fit a second linear model that included Age and Stay as predictors, with Infection Risk (InfctRsk) as the outcome variable. This model allows us to assess how both patient age and hospital stay length together contribute to the probability of acquiring an infection during hospitalization.
+
+```{r echo = FALSE}
+fit.2 <- lm (InfctRsk ~ Stay + Age, data=irisk.df)
+coef.vals <- coef(summary(fit.2))
+kable(coef.vals, caption = "Predicting Infection Risk with Stay and Age")
+```
+
+```{r echo=FALSE, results ='asis'}
+fitsum <- summary(fit.2)$adj.r.squared[1]
+formatted.str <- sprintf("The adjusted R-squared for this model was %.4f, indicating that Length of Stay and Age together explain about %.1f%% of the variation in Infection Risk.", fitsum, fitsum * 100)
+cat(formatted.str)
+```
+
+
+
+
+# Predicting with Models 1 and 2
+
+
+I evaluated the ability of the first and second models to predict Infection Risk on test data. We used 10-fold cross validation using 80% of the data for training and 20% for testing on each fold.
+
+```{r echo=FALSE}
+train.control <- trainControl(method = "cv", number = 10, p = 0.80)
+
+RNGversion(r.version)
+set.seed(seed.val)
+
+fit1.train <- train(InfctRsk ~ Stay + Region, data = irisk.df, method = "lm", trControl = train.control)
+
+fit2.train <- train(InfctRsk ~ Stay + Age, data = irisk.df, method = "lm", trControl = train.control)
+
+```
+
+```{r echo=FALSE, out.width="60%", out.height="40%", fig.align = 'center', fig.cap="RMSE Over 10 Folds."}
+num.folds <- 10
+
+rmse.model1 <- fit1.train$resample$RMSE
+rmse.model2 <- fit2.train$resample$RMSE
+
+ymin <- min(c(rmse.model1, rmse.model2))
+ymax <- max(c(rmse.model1, rmse.model2))
+
+plot(rmse.model1, type="b",col="blue",
+ylim=c(ymin, ymax),
+xlab="Fold",
+ylab="RMSE",
+xaxt="n")
+axis(1, at=1:num.folds, labels=1:num.folds)
+
+lines(rmse.model2, type="b", col="red", lty=2)
+
+legend("bottomright",legend=c("Model 1: Stay + Region", "Model 2: Stay + Age"), col=c("blue", "red"),lty=1:2,pch=1,cex=0.5)
+
+```
+
+```{r echo=FALSE}
+
+avg.rmse1 <- round(mean(rmse.model1), 2)
+avg.rmse2 <- round(mean(rmse.model2), 2)
+
+label <- c("Model 1: Stay + Region", "Model 2: Stay + Age")
+rmse <- c(avg.rmse1, avg.rmse2)
+rmse.tbl <- cbind(Label = label, Mean_RMSE = rmse)
+
+kable(rmse.tbl, caption = "Mean RMSE for Infection Risk Models 1 and 2")
+
+```
+
+
+# Summary and Conclusions
+
+The modeling results show that both Model 1 (Stay + Region) and Model 2 (Stay + Age) explain a moderate portion of the variation in hospital infection risk, with adjusted R² values of 0.3029 and 0.2820 In both models, average length of stay was the strongest and most statistically significant predictor of infection risk (p < 0.001), supporting the idea that patients who stay in the hospital longer face higher exposure and risk of infection.
+
+Regional differences in Model 1 showed weaker effects, with only the Western region approaching significance (p = 0.064), suggesting that while regional variation may exist, it is not a dominant factor once average hospital stay is taken into account. In Model 2, patient age was not statistically significant (p = 0.208), hinting that age alone does not have a large influence on infection risk once length of stay is accounted for.
+
+Cross-validation results further supported these findings. Both models achieved an average RMSE of 1.14, suggesting similar accuracy wih predictions. However, given that Model 1 explained slightly more variation and included a region factor that may capture institutional or environmental effects, it performed marginally better overall.
+
+These results partially support the hypothesis, as infection risk clearly increases with longer hospital stays, but the effect of patient age was not significant. This suggests that infection control efforts might be more effective if focused on managing hospital duration and exposure instead of just patient demographics alone.
+
+If infection risk, patient age, or hospital stay length were not recorded accurately or were measured differently across hospitals, the model’s results could be misleading. For example, if some hospitals underreport infections or define them differently, the data would be less reliable and the model’s conclusions less accurate.
+
+
+Overall, both models provide valuable insights into hospital infection risk factors, highlighting length of stay as the most influential predictor and suggesting that targeted interventions to reduce hospitalization duration could effectively lower infection rates.
+
