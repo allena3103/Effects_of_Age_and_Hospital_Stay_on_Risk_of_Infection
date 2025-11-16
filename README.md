@@ -1,68 +1,65 @@
-# 🎮 Steam Game Popularity Analysis
+# 🏥 Hospital Infection Risk Analysis
 
 **Author:** Allen Arriaga  
-**Date:** November 2025  
-**Tools Used:** Python, MySQL, Pandas, Data Visualization, Random Forest Modeling  
+**Date:** October 2025  
+**Tools Used:** R, Statistics, Data Visualization, Linear Regression, Cross Validation  
 
 ---
 
 ## 📘 Overview
 
-This project investigates the factors that influence **game popularity on Steam**.  
-Using data analysis and machine learning, I examined how **discounts**, **player activity**, **reviews**, and **developer presence** contribute to game ownership and overall player engagement.
+This project explores the factors influencing **hospital-acquired infection risk** across U.S. hospitals.  
+Using statistical modeling and data visualization, I analyzed how **average patient age**, **hospital stay length**, and **regional differences** contribute to infection rates.
 
-The analysis shows that **community-driven engagement metrics**—especially positive reviews and active player counts—play a far larger role in predicting game success than temporary price reductions.
+The analysis highlights how **hospital management practices**—especially patient stay duration—impact infection outcomes and provides insights for improving healthcare quality.
 
 ---
 
 ## 📊 Dataset
 
-The dataset contains **339 cleaned Steam game records**, with additional preprocessing and outlier filtering reducing the modeling dataset to **270 games**. Key variables include:
+The dataset contains records from **113 hospitals** nationwide, including:
 
-- **price:** Current game price  
-- **initialprice:** Original game price  
-- **discount:** Discount percentage  
-- **ccu:** Concurrent users  
-- **owners:** Estimated number of game owners  
-- **positive / negative:** Review counts  
-- **average_forever / median_forever:** Long-term playtime metrics  
-- **developer / publisher:** Game creators  
+- **Stay:** Average length of patient stay (days)  
+- **Age:** Average patient age (years)  
+- **Region:** Hospital’s geographic region (NE, NC, S, W)  
+- **Census, Beds, Nurses, Facilities, Culture, Xray, MedSchool:** Resource and diagnostic variables  
+- **InfctRsk:** Infection risk (%) — *dependent variable*
 
-Data was initially processed in **MySQL**, followed by **Python-based cleaning, filtering, and visualization**.
+Data was cleaned and preprocessed in **R**, with **3 incomplete records removed** before statistical analysis.
 
 ---
 
 ## 🔍 Methods
 
 - **Exploratory Data Analysis (EDA):**  
-  Trends in discounts, ownership, review counts, and developer frequency.
+  Regional comparisons of infection rates using summary statistics and visualizations.
 
-- **Predictive Modeling:**  
-  - Random Forest Regression to predict **owners** and **positive reviews**  
-  - Feature importance analysis  
-  - Scenario testing (e.g., ownership changes across discount levels)
+- **Model 1:** Infection Risk ~ Stay + Region  
+- **Model 2:** Infection Risk ~ Stay + Age  
 
-- **Outlier Handling:**  
-  IQR-based filtering to improve model performance and distribution consistency.
+- **Validation:**  
+  10-fold cross-validation to evaluate model performance.
+
+Both models were built using **multiple linear regression** in R, with model diagnostics and RMSE comparison to determine accuracy.
 
 ---
 
 ## 📈 Key Findings
 
-- **Positive reviews** were the strongest predictor of game ownership.  
-- **Negative reviews** and **CCU** also had notable influence.  
-- **Discount rate** and **price** showed **minimal predictive power** compared to engagement-based features.  
-- Moderate discounts correlated with higher player activity, but **steeper discounts did not always increase ownership**.  
-- The Random Forest model predicting positive reviews achieved an **R² score of 0.86**.
+- **Length of Stay** was the strongest and most significant predictor of infection risk (*p < 0.001*).  
+- **Age** had minimal impact once stay duration was accounted for.  
+- **Regional differences** were small but slightly higher in the **Western region**.  
+- Both models achieved a similar **RMSE of 1.14**, with Model 1 performing slightly better overall.
 
 ---
 
 ## 🧠 Conclusion
 
-Steam game popularity is driven more by **player engagement, community reputation, and active user bases** than by discount size.  
-Developers aiming for long-term success should prioritize **game quality, sustained engagement, and review generation**, rather than relying heavily on aggressive price cuts.
+Longer hospital stays substantially increase infection risk, while patient age contributes little to predictive power.  
+Reducing average hospital stay durations may be one of the most effective strategies for minimizing infection risk.
 
-For the complete visualizations, tables, and model outputs, refer to the full report:
+For the full statistical tables, model outputs, and visualizations, see the complete report below:
 
-📄 **[View Full Analysis (PDF)](./steam.analysis.pdf)**
+📄 **View Full Analysis (PDF)**
+
 
