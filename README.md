@@ -61,5 +61,5 @@ Reducing average hospital stay durations may be one of the most effective strate
 For the full statistical tables, model outputs, and visualizations, see the complete report below:
 
 📄 **View Full Analysis (PDF)**
-
+ 🏥 [**Hospital Data (PDF)**](Hospital_data.pdf)
 
